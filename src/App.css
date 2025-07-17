@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for the app */
+#root {
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* Ensure full height for the app */
+html, body, #root {
+  height: 100%;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Panel resize handle styling */
+.resize-handle {
+  background: #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background: #d1d5db;
+}
+
+.resize-handle[data-resize-handle-state="hover"] {
+  background: #9ca3af;
+}
+
+.resize-handle[data-resize-handle-state="drag"] {
+  background: #6b7280;
+}
+
+/* Message animation */
+.message-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.message-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
