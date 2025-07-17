@@ -7,13 +7,13 @@ const Navbar = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <BookOpen className="h-8 w-8 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-900">CourseBot</h1>
+          <h1 className="text-xl font-bold text-gray-900">Kōchime</h1>
         </div>
         
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <MessageSquare className="h-5 w-5 text-gray-500" />
-            <span className="text-sm text-gray-700">AI Assistant</span>
+            <span className="text-sm text-gray-700">AI Guide</span>
           </div>
           
           <div className="flex items-center space-x-2">

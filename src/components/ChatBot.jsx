@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Loader } from 'lucide-react';
+import { Send, Bot, User, Loader, Sparkles } from 'lucide-react';
 import database from '../utils/database';
+import aiAgent from '../utils/aiAgent';
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [aiProvider, setAiProvider] = useState('Loading...');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     loadMessages();
+    loadCourses();
+    checkAiProviders();
   }, []);
 
   useEffect(() => {
@@ -25,6 +31,29 @@ const ChatBot = () => {
     }
   };
 
+  const loadCourses = async () => {
+    try {
+      const coursesData = await database.getAllCourses();
+      setCourses(coursesData);
+    } catch (error) {
+      console.error('Error loading courses:', error);
+    }
+  };
+
+  const checkAiProviders = () => {
+    const providers = aiAgent.getAvailableProviders();
+    if (providers.length > 0) {
+      setAiProvider(providers[0]);
+    } else {
+      setAiProvider('Fallback');
+    }
+  };
+
+  const updateProviderStatus = () => {
+    const currentProvider = aiAgent.getCurrentProvider();
+    setAiProvider(currentProvider === 'fallback' ? 'Fallback' : currentProvider || 'Loading...');
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -32,42 +61,33 @@ const ChatBot = () => {
   const simulateBotResponse = async (userMessage) => {
     setIsTyping(true);
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    let botResponse = '';
-    
-    // Simple response logic based on keywords
-    const message = userMessage.toLowerCase();
-    
-    if (message.includes('course') || message.includes('learn')) {
-      const courses = await database.getAllCourses();
-      if (courses.length > 0) {
-        botResponse = `I can help you with courses! We have ${courses.length} courses available. Some popular ones include: ${courses.slice(0, 2).map(c => c.title).join(', ')}. Would you like to know more about any specific course?`;
-      } else {
-        botResponse = "I'd be happy to help you find courses! It looks like there are no courses available right now. You can add some using the course panel.";
-      }
-    } else if (message.includes('help') || message.includes('what can you do')) {
-      botResponse = "I can help you with:\n• Finding and recommending courses\n• Answering questions about course content\n• Providing learning guidance\n• Managing your learning schedule\n\nWhat would you like to know more about?";
-    } else if (message.includes('instructor') || message.includes('teacher')) {
-      botResponse = "Our instructors are experienced professionals in their fields. Each course page shows detailed information about the instructor, including their background and expertise.";
-    } else if (message.includes('duration') || message.includes('time')) {
-      botResponse = "Course durations vary depending on the complexity and depth of the subject. Most courses range from 4-8 weeks. You can find the specific duration for each course in the course details.";
-    } else if (message.includes('level') || message.includes('difficulty')) {
-      botResponse = "We offer courses for all skill levels:\n• Beginner: Perfect for those new to the subject\n• Intermediate: For those with some basic knowledge\n• Advanced: For experienced learners looking to deepen their expertise";
-    } else if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-      botResponse = "Hello! Welcome to CourseBot. I'm here to help you find the perfect courses and answer any questions you might have. How can I assist you today?";
-    } else if (message.includes('thank') || message.includes('thanks')) {
-      botResponse = "You're welcome! I'm here whenever you need help with courses or learning. Feel free to ask me anything else!";
-    } else {
-      botResponse = "I understand you're asking about: \"" + userMessage + "\". While I'm still learning, I can help you find courses, provide information about our offerings, or answer questions about learning. Could you please rephrase your question or ask me about courses, instructors, or learning paths?";
+    try {
+      // Use AI agent to generate response
+      const botResponse = await aiAgent.generateResponse(userMessage, {
+        courses,
+        selectedCourse
+      });
+      
+      // Update provider status
+      updateProviderStatus();
+      
+      setIsTyping(false);
+      
+      // Add bot response to database
+      await database.addMessage(botResponse, 'bot');
+      loadMessages();
+      
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      setIsTyping(false);
+      
+      // Fallback response
+      const fallbackResponse = "I'm having trouble connecting to my AI brain right now. Please try again in a moment, or ask me about our available courses!";
+      await database.addMessage(fallbackResponse, 'bot');
+      loadMessages();
+      
+      setAiProvider('Fallback');
     }
-    
-    setIsTyping(false);
-    
-    // Add bot response to database
-    await database.addMessage(botResponse, 'bot');
-    loadMessages();
   };
 
   const handleSendMessage = async (e) => {
@@ -93,9 +113,15 @@ const ChatBot = () => {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          <Bot className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-semibold text-gray-900">AI Course Assistant</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Bot className="h-5 w-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Kōchime AI Guide</h2>
+          </div>
+          <div className="flex items-center space-x-1 text-xs text-gray-500">
+            <Sparkles className="h-3 w-3" />
+            <span>{aiProvider}</span>
+          </div>
         </div>
         <p className="text-sm text-gray-600 mt-1">Ask me anything about courses and learning!</p>
       </div>
@@ -121,7 +147,7 @@ const ChatBot = () => {
                   <Bot className="h-4 w-4" />
                 )}
                 <span className="text-xs font-medium">
-                  {message.sender === 'user' ? 'You' : 'CourseBot'}
+                  {message.sender === 'user' ? 'You' : 'Kōchime AI'}
                 </span>
               </div>
               <div className="text-sm">{formatMessage(message.message)}</div>
@@ -134,7 +160,7 @@ const ChatBot = () => {
             <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-gray-200 text-gray-900">
               <div className="flex items-center space-x-2 mb-1">
                 <Bot className="h-4 w-4" />
-                <span className="text-xs font-medium">CourseBot</span>
+                <span className="text-xs font-medium">Kōchime AI</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Loader className="h-4 w-4 animate-spin" />

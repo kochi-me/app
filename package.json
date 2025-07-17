@@ -14,9 +14,11 @@
     "db:seed": "node scripts/test-db.js --seed",
     "start": "node scripts/start-dev.js",
     "setup": "node scripts/show-setup.js",
-    "deploy": "node scripts/deploy-gh-pages.js"
+    "deploy": "node scripts/deploy-gh-pages.js",
+    "test-ai": "node scripts/test-ai-keys.js"
   },
   "dependencies": {
+    "@huggingface/inference": "^4.5.3",
     "@supabase/supabase-js": "^2.52.0",
     "@tailwindcss/vite": "^4.1.11",
     "dotenv": "^16.6.1",
